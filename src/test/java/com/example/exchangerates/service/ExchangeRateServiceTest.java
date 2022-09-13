@@ -2,6 +2,7 @@ package com.example.exchangerates.service;
 
 import com.example.exchangerates.ExchangeRateCurrencies;
 import com.example.exchangerates.dto.UpdateExchangeRatesResponse;
+import com.example.exchangerates.exception.ErrorMessages;
 import com.example.exchangerates.model.CurrencyWithExchangeRates;
 import com.example.exchangerates.util.HTTPUtil;
 import com.example.exchangerates.util.XMLFileUtil;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -43,16 +43,10 @@ class ExchangeRateServiceTest {
     private static HTTPUtil httpUtil = mock(HTTPUtil.class);
     @Spy
     private static ExchangeRateService exchangeRateService = new ExchangeRateService(xmlFileUtil, httpUtil);
-    private static Map<Currency,String> expectedExchangeRatesResponses = new HashMap<>();
+    private static Map<Currency,String> expectedExchangeRateResponses = new HashMap<>();
     private static List<CurrencyWithExchangeRates> expectedCurrenciesWithExchangeRates = new ArrayList<>();
     private static String DUMMY_DATA_FILE_USD = "dummyExchangeRatesResponseUSD.json";
     private static String DUMMY_DATA_FILE_EUR = "dummyExchangeRatesResponseEUR.json";
-
-    @Value("exchange.rates.service.base.url")
-    private String exchangeRatesServiceBaseURL;
-
-    @Value("exchange.rates.service.api.key")
-    private String exchangeRatesServiceAPIKey;
 
     ExchangeRateServiceTest() throws Exception{
     }
@@ -62,11 +56,9 @@ class ExchangeRateServiceTest {
         //should be in sync with dummy data & @Value fields in ExchangeRateService
         ReflectionTestUtils.setField(exchangeRateService,"exchangeRatesServiceResponseFields_exchangeRates","conversion_rates");
         ReflectionTestUtils.setField(exchangeRateService,"exchangeRatesFilesLocation","exchange-rates");
-        ReflectionTestUtils.setField(exchangeRateService,"exchangeRatesServiceBaseURL","https://v6.exchangerate-api.com/v6/");
-        ReflectionTestUtils.setField(exchangeRateService,"exchangeRatesServiceAPIKey","set-as-environment-variable");
-        expectedExchangeRatesResponses.put(Currency.getInstance("USD"),
+        expectedExchangeRateResponses.put(Currency.getInstance("USD"),
                 Files.readString(Path.of(ClassLoader.getSystemResource(DUMMY_DATA_FILE_USD).toURI())));
-        expectedExchangeRatesResponses.put(Currency.getInstance("EUR"),
+        expectedExchangeRateResponses.put(Currency.getInstance("EUR"),
                 Files.readString(Path.of(ClassLoader.getSystemResource(DUMMY_DATA_FILE_EUR).toURI())));
         Map<String, Double> USDExchangeRates = new HashMap<>();
         USDExchangeRates.put("EUR", 0.9961);
@@ -88,7 +80,7 @@ class ExchangeRateServiceTest {
         ArgumentCaptor<String> validatedFileName = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> fileNameWithoutExtension = ArgumentCaptor.forClass(String.class);
 
-        doReturn(expectedExchangeRatesResponses).when(exchangeRateService).fetchExchangeRates();
+        doReturn(expectedExchangeRateResponses).when(exchangeRateService).fetchExchangeRates();
         doCallRealMethod().when(xmlFileUtil).getFileNameWithExtension(fileNameWithoutExtension.capture());
         doNothing().when(xmlFileUtil).writeFile(actualCurrenciesWithExchangeRates.capture(),writtenToFileName.capture());
         when(xmlFileUtil.validateFile(validatedFileName.capture())).thenReturn(true);
@@ -108,26 +100,43 @@ class ExchangeRateServiceTest {
     }
 
     @Test
+    public void shouldFetchExchangeRateResponses() {
+        String expectedResponse = "Dummy Response";
+
+        Map<Currency, String> expectedExchangeRateResponses = new HashMap<>();
+        Arrays.stream(ExchangeRateCurrencies.values()).forEach(exchangeRateCurrency ->
+            expectedExchangeRateResponses.put(Currency.getInstance(exchangeRateCurrency.name()), expectedResponse));
+
+        doReturn(expectedResponse).when(httpUtil).makeHTTPRequest(any());
+
+        Map<Currency, String> actualExchangeRateResponses = exchangeRateService.fetchExchangeRates();
+
+        Arrays.stream(ExchangeRateCurrencies.values()).forEach(exchangeRateCurrency -> {
+            assertTrue(actualExchangeRateResponses.containsKey(Currency.getInstance(exchangeRateCurrency.name())));
+            assertEquals(expectedResponse, actualExchangeRateResponses.get(Currency.getInstance(exchangeRateCurrency.name())));
+        });
+    }
+
+    @Test
     public void updateExchangeRates_shouldThrowException_whenXMLFileIsInvalid() {
 
-        doReturn(expectedExchangeRatesResponses).when(exchangeRateService).fetchExchangeRates();
+        doReturn(expectedExchangeRateResponses).when(exchangeRateService).fetchExchangeRates();
         doCallRealMethod().when(xmlFileUtil).getFileNameWithExtension(any());
         doNothing().when(xmlFileUtil).writeFile(any(), any());
         when(xmlFileUtil.validateFile(any())).thenReturn(false);
 
-        Assert.assertThrows(IOException.class, () -> exchangeRateService.updateExchangeRates());
+        Exception exception = Assert.assertThrows(IOException.class, () -> exchangeRateService.updateExchangeRates());
+        assertEquals(ErrorMessages.XML_FILE_CREATED_IS_INVALID.getMessage(), exception.getMessage());
     }
 
     @Test
-    public void shouldFetchExchangeRateResponses() {
-        Map<Currency, String> expectedExchangeRateResponses = new HashMap<>();
-        Arrays.stream(ExchangeRateCurrencies.values()).forEach(exchangeRateCurrency ->
-            expectedExchangeRateResponses.put(Currency.getInstance(exchangeRateCurrency.name()),
-                    "Response for " + exchangeRateCurrency));
+    public void shouldThrowException_whenExchangeRateResponsesAreInvalid() throws IOException {
+        Map<Currency, String> invalidExchangeRateResponses = new HashMap<>();
+        invalidExchangeRateResponses.put(Currency.getInstance("USD"),"INVALID JSON");
 
-        Arrays.stream(ExchangeRateCurrencies.values()).forEach(exchangeRateCurrency ->
-                doReturn("Response for " + exchangeRateCurrency.name())
-                    .when(httpUtil).makeHTTPRequest(exchangeRatesServiceBaseURL +
-                                exchangeRatesServiceAPIKey + "/latest/" + exchangeRateCurrency.name()));
+        doReturn(invalidExchangeRateResponses).when(exchangeRateService).fetchExchangeRates();
+
+        Exception exception = Assert.assertThrows(RuntimeException.class, () -> exchangeRateService.updateExchangeRates());
+        assertEquals(ErrorMessages.ERROR_PARSING_EXCHANGE_RATE_SERVICE_RESPONSE.getMessage(), exception.getMessage());
     }
 }

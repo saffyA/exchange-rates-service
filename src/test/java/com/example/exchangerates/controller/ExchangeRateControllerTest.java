@@ -1,6 +1,7 @@
 package com.example.exchangerates.controller;
 
 import com.example.exchangerates.dto.UpdateExchangeRatesResponse;
+import com.example.exchangerates.exception.ErrorMessages;
 import com.example.exchangerates.exception.GlobalExceptionHandler;
 import com.example.exchangerates.service.ExchangeRateService;
 import com.example.exchangerates.util.HTTPUtil;
@@ -101,8 +102,6 @@ class ExchangeRateControllerTest {
 
     @Test
     void shouldReturn500_whenGeneratedFileNotValid() throws Exception {
-        //TODO use constants
-        String expectedErrorMessage = "Exchange Rates XML generated is not valid";
 
         doReturn(expectedExchangeRatesResponses).when(exchangeRateService).fetchExchangeRates();
         doCallRealMethod().when(xmlFileUtil).getFileNameWithExtension(any());
@@ -116,6 +115,6 @@ class ExchangeRateControllerTest {
                 .andReturn().getResponse();
         String actualResponseJSON = actualResponse.getContentAsString();
 
-        assertEquals(expectedErrorMessage, actualResponseJSON);
+        assertEquals(ErrorMessages.XML_FILE_CREATED_IS_INVALID.getMessage(), actualResponseJSON);
     }
 }
