@@ -1,11 +1,7 @@
 package com.example.exchangerates.model;
 
 import com.example.exchangerates.ExchangeRateCurrencies;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;

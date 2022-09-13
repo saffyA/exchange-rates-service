@@ -84,8 +84,17 @@ public class XMLFileUtil {
     public boolean validateFile(String filePath) {
         try {
             Validator validator = initValidator(XSD_FILE);
-            System.out.println(filePath);
             validator.validate(new StreamSource(getFile(filePath)));
+            return true;
+        } catch (SAXException | IOException e) {
+            throw new RuntimeException(ErrorMessages.ERROR_VALIDATING_XML_FILE.getMessage(), e);
+        }
+    }
+
+    public boolean validateContent(String content) {
+        try {
+            Validator validator = initValidator(XSD_FILE);
+            validator.validate(new StreamSource(content));
             return true;
         } catch (SAXException | IOException e) {
             throw new RuntimeException(ErrorMessages.ERROR_VALIDATING_XML_FILE.getMessage(), e);
