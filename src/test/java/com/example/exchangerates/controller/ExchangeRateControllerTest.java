@@ -35,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -106,7 +107,8 @@ class ExchangeRateControllerTest {
         doReturn(expectedExchangeRatesResponses).when(exchangeRateService).fetchExchangeRates();
         doCallRealMethod().when(xmlFileUtil).getFileNameWithExtension(any());
         doNothing().when(xmlFileUtil).writeFile(any(),any());
-        when(xmlFileUtil.validateFile(any())).thenReturn(false);
+        doThrow(new RuntimeException(ErrorMessages.ERROR_VALIDATING_XML_FILE.getMessage()))
+                .when(xmlFileUtil).validateFile(any());
 
         MockHttpServletResponse actualResponse = mockMvc.perform(put("/exchange-rates")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -115,6 +117,6 @@ class ExchangeRateControllerTest {
                 .andReturn().getResponse();
         String actualResponseJSON = actualResponse.getContentAsString();
 
-        assertEquals(ErrorMessages.XML_FILE_CREATED_IS_INVALID.getMessage(), actualResponseJSON);
+        assertEquals(ErrorMessages.ERROR_VALIDATING_XML_FILE.getMessage(), actualResponseJSON);
     }
 }

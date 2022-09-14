@@ -122,18 +122,6 @@ class ExchangeRateServiceTest {
     }
 
     @Test
-    public void updateExchangeRates_shouldThrowException_whenXMLFileIsInvalid() {
-
-        doReturn(expectedExchangeRateResponses).when(exchangeRateService).fetchExchangeRates();
-        doCallRealMethod().when(xmlFileUtil).getFileNameWithExtension(any());
-        doNothing().when(xmlFileUtil).writeFile(any(), any());
-        when(xmlFileUtil.validateFile(any())).thenReturn(false);
-
-        Exception exception = Assert.assertThrows(IOException.class, () -> exchangeRateService.updateExchangeRates());
-        assertEquals(ErrorMessages.XML_FILE_CREATED_IS_INVALID.getMessage(), exception.getMessage());
-    }
-
-    @Test
     public void shouldThrowException_whenExchangeRateResponsesAreInvalid() throws IOException {
         Map<Currency, String> invalidExchangeRateResponses = new HashMap<>();
         invalidExchangeRateResponses.put(Currency.getInstance("USD"),"INVALID JSON");

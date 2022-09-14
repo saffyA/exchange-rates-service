@@ -94,7 +94,7 @@ public class XMLFileUtil {
     public boolean validateContent(String content) {
         try {
             Validator validator = initValidator(XSD_FILE);
-            validator.validate(new StreamSource(content));
+            validator.validate(new StreamSource(new StringReader(content)));
             return true;
         } catch (SAXException | IOException e) {
             throw new RuntimeException(ErrorMessages.ERROR_VALIDATING_XML_FILE.getMessage(), e);

@@ -47,16 +47,14 @@ public class ExchangeRateService {
         this.httpUtil = httpUtil;
     }
 
-    public UpdateExchangeRatesResponse updateExchangeRates() throws IOException{
+    public UpdateExchangeRatesResponse updateExchangeRates() {
         Map<Currency, String> exchangeRatesResponses = fetchExchangeRates();
         List<CurrencyWithExchangeRates> currenciesWithExchangeRates = parseExchangeRatesResponses(exchangeRatesResponses);
         String fileName = getFileName();
         String fileNameWithXMLExtension = xmlFileUtil.getFileNameWithExtension(fileName);
         xmlFileUtil.writeFile(currenciesWithExchangeRates, fileNameWithXMLExtension);
-        if(xmlFileUtil.validateFile(fileNameWithXMLExtension))
-            return new UpdateExchangeRatesResponse(UpdateExchangeRatesResponse.UpdateStatus.SUCCESS,fileNameWithXMLExtension);
-        else
-            throw new IOException(ErrorMessages.XML_FILE_CREATED_IS_INVALID.getMessage());
+        xmlFileUtil.validateFile(fileNameWithXMLExtension);
+        return new UpdateExchangeRatesResponse(UpdateExchangeRatesResponse.UpdateStatus.SUCCESS,fileNameWithXMLExtension);
     }
 
     public Map<Currency, String> fetchExchangeRates() {

@@ -18,7 +18,7 @@ public class ExchangeRateController {
     }
 
     @PutMapping("/exchange-rates")
-    public ResponseEntity<UpdateExchangeRatesResponse> updateExchangeRates() throws IOException {
+    public ResponseEntity<UpdateExchangeRatesResponse> updateExchangeRates() {
         return ResponseEntity.ok(exchangeRateService.updateExchangeRates());
     }
 }

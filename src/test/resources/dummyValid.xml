@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<exchange-rates>
+    <base-currency id="USD">
+        <currency id="CHF">
+            <rate>0.9613</rate>
+        </currency>
+        <currency id="GBP">
+            <rate>0.865</rate>
+        </currency>
+        <currency id="EUR">
+            <rate>0.9961</rate>
+        </currency>
+    </base-currency>
+    <base-currency id="EUR">
+        <currency id="CHF">
+            <rate>0.9652</rate>
+        </currency>
+        <currency id="GBP">
+            <rate>0.8684</rate>
+        </currency>
+        <currency id="USD">
+            <rate>1.0039</rate>
+        </currency>
+    </base-currency>
+</exchange-rates>
