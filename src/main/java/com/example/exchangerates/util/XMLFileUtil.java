@@ -1,5 +1,6 @@
 package com.example.exchangerates.util;
 
+import com.example.exchangerates.ExchangeRateCurrencies;
 import com.example.exchangerates.exception.ErrorMessages;
 import com.example.exchangerates.model.CurrencyWithExchangeRates;
 import org.springframework.stereotype.Component;
@@ -70,7 +71,7 @@ public class XMLFileUtil {
         String xmlOutput = "<exchange-rates>";
         for(CurrencyWithExchangeRates currencyWithExchangeRates : currenciesWithExchangeRates) {
             xmlOutput += "<base-currency id=\"" + currencyWithExchangeRates.getBaseCurrency() + "\">";
-            for(Map.Entry<Currency,Double> entry: currencyWithExchangeRates.getExchangeRates().entrySet()) {
+            for(Map.Entry<ExchangeRateCurrencies,Double> entry: currencyWithExchangeRates.getExchangeRates().entrySet()) {
                 xmlOutput += "<currency id=\"" + entry.getKey() + "\">";
                 xmlOutput += "<rate>" + entry.getValue() + "</rate>";
                 xmlOutput += "</currency>";

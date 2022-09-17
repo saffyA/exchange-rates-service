@@ -45,7 +45,7 @@ class ExchangeRateServiceTest {
     private static HTTPUtil httpUtil = mock(HTTPUtil.class);
     @Spy
     private static ExchangeRateService exchangeRateService = new ExchangeRateService(xmlFileUtil, httpUtil);
-    private static Map<Currency,String> expectedExchangeRateResponses = new HashMap<>();
+    private static Map<ExchangeRateCurrencies,String> expectedExchangeRateResponses = new HashMap<>();
     private static List<CurrencyWithExchangeRates> expectedCurrenciesWithExchangeRates = new ArrayList<>();
     private static String DUMMY_DATA_FILE_USD = "dummyExchangeRatesResponseUSD.json";
     private static String DUMMY_DATA_FILE_EUR = "dummyExchangeRatesResponseEUR.json";
@@ -58,20 +58,20 @@ class ExchangeRateServiceTest {
         //should be in sync with dummy data & @Value fields in ExchangeRateService
         ReflectionTestUtils.setField(exchangeRateService,"exchangeRatesServiceResponseFields_exchangeRates","conversion_rates");
         ReflectionTestUtils.setField(exchangeRateService,"exchangeRatesFilesLocation","exchange-rates");
-        expectedExchangeRateResponses.put(Currency.getInstance("USD"),
+        expectedExchangeRateResponses.put(ExchangeRateCurrencies.USD,
                 Files.readString(Path.of(ClassLoader.getSystemResource(DUMMY_DATA_FILE_USD).toURI())));
-        expectedExchangeRateResponses.put(Currency.getInstance("EUR"),
+        expectedExchangeRateResponses.put(ExchangeRateCurrencies.EUR,
                 Files.readString(Path.of(ClassLoader.getSystemResource(DUMMY_DATA_FILE_EUR).toURI())));
         Map<String, Double> USDExchangeRates = new HashMap<>();
         USDExchangeRates.put("EUR", 0.9961);
         USDExchangeRates.put("GBP", 0.865);
         USDExchangeRates.put("CHF", 0.9613);
-        expectedCurrenciesWithExchangeRates.add(new CurrencyWithExchangeRates(Currency.getInstance("USD"),USDExchangeRates));
+        expectedCurrenciesWithExchangeRates.add(new CurrencyWithExchangeRates(ExchangeRateCurrencies.USD,USDExchangeRates));
         Map<String, Double> EURExchangeRates = new HashMap<>();
         EURExchangeRates.put("USD", 1.0039);
         EURExchangeRates.put("GBP", 0.8684);
         EURExchangeRates.put("CHF", 0.9652);
-        expectedCurrenciesWithExchangeRates.add(new CurrencyWithExchangeRates(Currency.getInstance("EUR"),EURExchangeRates));
+        expectedCurrenciesWithExchangeRates.add(new CurrencyWithExchangeRates(ExchangeRateCurrencies.EUR,EURExchangeRates));
     }
 
     @Test
@@ -113,11 +113,11 @@ class ExchangeRateServiceTest {
 
         doReturn(expectedResponse).when(httpUtil).makeHTTPRequest(any());
 
-        Map<Currency, String> actualExchangeRateResponses = exchangeRateService.fetchExchangeRates();
+        Map<ExchangeRateCurrencies, String> actualExchangeRateResponses = exchangeRateService.fetchExchangeRates();
 
         Arrays.stream(ExchangeRateCurrencies.values()).forEach(exchangeRateCurrency -> {
-            assertTrue(actualExchangeRateResponses.containsKey(Currency.getInstance(exchangeRateCurrency.name())));
-            assertEquals(expectedResponse, actualExchangeRateResponses.get(Currency.getInstance(exchangeRateCurrency.name())));
+            assertTrue(actualExchangeRateResponses.containsKey(exchangeRateCurrency));
+            assertEquals(expectedResponse, actualExchangeRateResponses.get(exchangeRateCurrency));
         });
     }
 

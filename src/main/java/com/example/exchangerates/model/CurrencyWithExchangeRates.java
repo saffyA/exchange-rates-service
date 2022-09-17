@@ -2,32 +2,31 @@ package com.example.exchangerates.model;
 
 import com.example.exchangerates.ExchangeRateCurrencies;
 
-import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class CurrencyWithExchangeRates {
-    Currency baseCurrency;
-    Map<Currency, Double> exchangeRates = new HashMap<>();
+    ExchangeRateCurrencies baseCurrency;
+    Map<ExchangeRateCurrencies, Double> exchangeRates = new HashMap<>();
 
-    public CurrencyWithExchangeRates(Currency baseCurrency, Map<String, Double> exchangeRates) {
+    public CurrencyWithExchangeRates(ExchangeRateCurrencies baseCurrency, Map<String, Double> exchangeRates) {
         this.baseCurrency = baseCurrency;
         exchangeRates.forEach((key ,value) ->  {
             try {
                 ExchangeRateCurrencies exchangeRateCurrency = ExchangeRateCurrencies.valueOf(key);
-                if(Currency.getInstance(exchangeRateCurrency.name()) != baseCurrency)
-                    this.exchangeRates.put(Currency.getInstance(key), value);
+                if(exchangeRateCurrency != baseCurrency)
+                    this.exchangeRates.put(exchangeRateCurrency, value);
             }
             catch (IllegalArgumentException ignored){}
         });
     }
 
-    public Currency getBaseCurrency() {
+    public ExchangeRateCurrencies getBaseCurrency() {
         return baseCurrency;
     }
 
-    public Map<Currency, Double> getExchangeRates() {
+    public Map<ExchangeRateCurrencies, Double> getExchangeRates() {
         return exchangeRates;
     }
 

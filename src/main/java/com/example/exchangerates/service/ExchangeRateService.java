@@ -4,6 +4,7 @@ import com.example.exchangerates.ExchangeRateCurrencies;
 import com.example.exchangerates.dto.UpdateExchangeRatesResponse;
 import com.example.exchangerates.exception.ErrorMessages;
 import com.example.exchangerates.model.CurrencyWithExchangeRates;
+import com.example.exchangerates.model.ExchangeRateResponse;
 import com.example.exchangerates.util.HTTPUtil;
 import com.example.exchangerates.util.XMLFileUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +22,7 @@ import java.util.Currency;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ExchangeRateService {
@@ -48,7 +49,7 @@ public class ExchangeRateService {
     }
 
     public UpdateExchangeRatesResponse updateExchangeRates() {
-        Map<Currency, String> exchangeRatesResponses = fetchExchangeRates();
+        Map<ExchangeRateCurrencies, String> exchangeRatesResponses = fetchExchangeRates();
         List<CurrencyWithExchangeRates> currenciesWithExchangeRates = parseExchangeRatesResponses(exchangeRatesResponses);
         String fileName = getFileName();
         String fileNameWithXMLExtension = xmlFileUtil.getFileNameWithExtension(fileName);
@@ -57,19 +58,42 @@ public class ExchangeRateService {
         return new UpdateExchangeRatesResponse(UpdateExchangeRatesResponse.UpdateStatus.SUCCESS,fileNameWithXMLExtension);
     }
 
-    public Map<Currency, String> fetchExchangeRates() {
-        Map<Currency,String> exchangeRatesResponses = new HashMap<>();
-        for(ExchangeRateCurrencies exchangeRateCurrency : ExchangeRateCurrencies.values()) {
-            exchangeRatesResponses.put(Currency.getInstance(exchangeRateCurrency.name()),
-                    httpUtil.makeHTTPRequest(exchangeRatesServiceBaseURL + exchangeRatesServiceAPIKey + "/latest/" + exchangeRateCurrency.name()));
-        }
-        return exchangeRatesResponses;
+    public ExchangeRateResponse getExchangeRate(ExchangeRateCurrencies baseCurrency, ExchangeRateCurrencies toCurrency) {
+        Map <ExchangeRateCurrencies, String> exchangeRateServiceResponse = fetchExchangeRates(baseCurrency);
+        List<CurrencyWithExchangeRates> currencyWithExchangeRates =
+                parseExchangeRatesResponses(exchangeRateServiceResponse);
+        Optional<Double> exchangeRate = Optional.ofNullable(
+                currencyWithExchangeRates.get(0)
+                .getExchangeRates()
+                .get(Currency.getInstance(toCurrency.name())));
+        if(exchangeRate.isEmpty())
+            throw(new RuntimeException(ErrorMessages.EXCHANGE_RATE_NOT_FOUND.getMessage()));
+        return new ExchangeRateResponse
+                (baseCurrency, toCurrency, exchangeRate.get());
     }
 
-    private List<CurrencyWithExchangeRates> parseExchangeRatesResponses(Map<Currency, String> exchangeRatesResponses) {
+    public Map<ExchangeRateCurrencies, String> fetchExchangeRates() {
+        Map<ExchangeRateCurrencies,String> exchangeRatesServiceResponses = new HashMap<>();
+        for(ExchangeRateCurrencies exchangeRateCurrency : ExchangeRateCurrencies.values()) {
+            exchangeRatesServiceResponses.put(exchangeRateCurrency,
+                    httpUtil.makeHTTPRequest(exchangeRatesServiceBaseURL +
+                            exchangeRatesServiceAPIKey + "/latest/" + exchangeRateCurrency.name()));
+        }
+        return exchangeRatesServiceResponses;
+    }
+
+    public Map<ExchangeRateCurrencies, String> fetchExchangeRates(ExchangeRateCurrencies baseCurrency) {
+        Map<ExchangeRateCurrencies, String> exchangeRateResponse = new HashMap<>();
+        exchangeRateResponse.put(baseCurrency,
+                httpUtil.makeHTTPRequest(exchangeRatesServiceBaseURL +
+                        exchangeRatesServiceAPIKey + "/latest/" + baseCurrency.name()));
+        return exchangeRateResponse;
+    }
+
+    private List<CurrencyWithExchangeRates> parseExchangeRatesResponses(Map<ExchangeRateCurrencies, String> exchangeRatesResponses) {
         List<CurrencyWithExchangeRates> currenciesWithExchangeRates = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
-        for(Map.Entry<Currency, String> entry : exchangeRatesResponses.entrySet()) {
+        for(Map.Entry<ExchangeRateCurrencies, String> entry : exchangeRatesResponses.entrySet()) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(entry.getValue());
                 String exchangeRates = jsonNode.get(exchangeRatesServiceResponseFields_exchangeRates).toString();
@@ -81,7 +105,7 @@ public class ExchangeRateService {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(ErrorMessages.ERROR_PARSING_EXCHANGE_RATE_SERVICE_RESPONSE.getMessage(), e);
             }
-        };
+        }
         return currenciesWithExchangeRates;
     }
 

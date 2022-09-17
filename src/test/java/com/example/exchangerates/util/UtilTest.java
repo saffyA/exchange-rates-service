@@ -1,5 +1,6 @@
 package com.example.exchangerates.util;
 
+import com.example.exchangerates.ExchangeRateCurrencies;
 import com.example.exchangerates.exception.ErrorMessages;
 import com.example.exchangerates.model.CurrencyWithExchangeRates;
 import org.junit.Assert;
@@ -41,12 +42,12 @@ class UtilTest {
         USDExchangeRates.put("EUR", 0.9961);
         USDExchangeRates.put("GBP", 0.865);
         USDExchangeRates.put("CHF", 0.9613);
-        currenciesWithExchangeRates.add(new CurrencyWithExchangeRates(Currency.getInstance("USD"),USDExchangeRates));
+        currenciesWithExchangeRates.add(new CurrencyWithExchangeRates(ExchangeRateCurrencies.USD,USDExchangeRates));
         Map<String, Double> EURExchangeRates = new HashMap<>();
         EURExchangeRates.put("USD", 1.0039);
         EURExchangeRates.put("GBP", 0.8684);
         EURExchangeRates.put("CHF", 0.9652);
-        currenciesWithExchangeRates.add(new CurrencyWithExchangeRates(Currency.getInstance("EUR"),EURExchangeRates));
+        currenciesWithExchangeRates.add(new CurrencyWithExchangeRates(ExchangeRateCurrencies.EUR,EURExchangeRates));
 
         String actualXMLString = xmlFileUtil.getXMLString(currenciesWithExchangeRates);
         assertTrue(xmlFileUtil.validateContent(xmlHeader + actualXMLString));
