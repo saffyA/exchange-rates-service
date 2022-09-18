@@ -27,3 +27,8 @@ In the home folder:
     
 ```PUT http://localhost:8080/exchange-rates```
 
+2. End point to read current exchange rate in terms of X/Y. Example USD/EUR
+
+
+```GET http://localhost:8080/exchange-rates/baseCurrency/toCurrency```
+

@@ -4,6 +4,7 @@ import com.example.exchangerates.ExchangeRateCurrencies;
 import com.example.exchangerates.dto.UpdateExchangeRatesResponse;
 import com.example.exchangerates.exception.ErrorMessages;
 import com.example.exchangerates.model.CurrencyWithExchangeRates;
+import com.example.exchangerates.model.ExchangeRateResponse;
 import com.example.exchangerates.util.HTTPUtil;
 import com.example.exchangerates.util.XMLFileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,7 @@ class ExchangeRateServiceTest {
     private static Map<ExchangeRateCurrencies,String> expectedExchangeRateResponses = new HashMap<>();
     private static List<CurrencyWithExchangeRates> expectedCurrenciesWithExchangeRates = new ArrayList<>();
     private static String DUMMY_DATA_FILE_USD = "dummyExchangeRatesResponseUSD.json";
+    private static String DUMMY_DATA_FILE_USD_WITHOUT_EUR = "dummyExchangeRatesResponseUSD_withoutEUR.json";
     private static String DUMMY_DATA_FILE_EUR = "dummyExchangeRatesResponseEUR.json";
 
     ExchangeRateServiceTest() throws Exception{
@@ -130,5 +132,35 @@ class ExchangeRateServiceTest {
 
         Exception exception = Assert.assertThrows(RuntimeException.class, () -> exchangeRateService.updateExchangeRates());
         assertEquals(ErrorMessages.ERROR_PARSING_EXCHANGE_RATE_SERVICE_RESPONSE.getMessage(), exception.getMessage());
+    }
+
+    @Test
+    public void shouldGetExchangeRate() {
+        Map<ExchangeRateCurrencies, String> expectedExchangeRateResponse = new HashMap<>();
+        expectedExchangeRateResponse.put(ExchangeRateCurrencies.USD, expectedExchangeRateResponses.get(ExchangeRateCurrencies.USD));
+
+        doReturn(expectedExchangeRateResponse).when(exchangeRateService).fetchExchangeRates(ExchangeRateCurrencies.USD);
+
+        ExchangeRateResponse expectedResponse =
+                new ExchangeRateResponse(ExchangeRateCurrencies.USD, ExchangeRateCurrencies.EUR, 0.9961);
+
+        ExchangeRateResponse actualResponse =
+                exchangeRateService.getExchangeRate(ExchangeRateCurrencies.USD, ExchangeRateCurrencies.EUR);
+
+        assertEquals(expectedResponse, actualResponse);
+    }
+
+    @Test
+    public void getExchangeRate_shouldThrowException_whenExchangeRateNotFound() throws URISyntaxException, IOException {
+        Map<ExchangeRateCurrencies, String> exchangeRateResponse = new HashMap<>();
+        exchangeRateResponse.put(ExchangeRateCurrencies.USD,
+                Files.readString(Path.of(ClassLoader.getSystemResource(DUMMY_DATA_FILE_USD_WITHOUT_EUR).toURI())));
+
+        doReturn(exchangeRateResponse).when(exchangeRateService).fetchExchangeRates(ExchangeRateCurrencies.USD);
+
+        Exception exception = Assert.assertThrows(RuntimeException.class,
+                () -> exchangeRateService.getExchangeRate(ExchangeRateCurrencies.USD, ExchangeRateCurrencies.EUR));
+
+        assertEquals(ErrorMessages.EXCHANGE_RATE_NOT_FOUND.getMessage(), exception.getMessage());
     }
 }

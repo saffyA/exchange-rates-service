@@ -65,7 +65,7 @@ public class ExchangeRateService {
         Optional<Double> exchangeRate = Optional.ofNullable(
                 currencyWithExchangeRates.get(0)
                 .getExchangeRates()
-                .get(Currency.getInstance(toCurrency.name())));
+                .get(toCurrency));
         if(exchangeRate.isEmpty())
             throw(new RuntimeException(ErrorMessages.EXCHANGE_RATE_NOT_FOUND.getMessage()));
         return new ExchangeRateResponse

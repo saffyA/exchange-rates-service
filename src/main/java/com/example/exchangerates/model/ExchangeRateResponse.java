@@ -3,6 +3,7 @@ package com.example.exchangerates.model;
 import com.example.exchangerates.ExchangeRateCurrencies;
 
 import java.util.Currency;
+import java.util.Objects;
 
 public class ExchangeRateResponse {
     ExchangeRateCurrencies baseCurrency;
@@ -27,4 +28,16 @@ public class ExchangeRateResponse {
         return exchangeRate;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ExchangeRateResponse that = (ExchangeRateResponse) o;
+        return baseCurrency == that.baseCurrency && toCurrency == that.toCurrency && Objects.equals(exchangeRate, that.exchangeRate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(baseCurrency, toCurrency, exchangeRate);
+    }
 }
